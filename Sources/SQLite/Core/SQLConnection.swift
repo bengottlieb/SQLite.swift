@@ -106,6 +106,7 @@ public final class SQLConnection {
         let flags = readonly ? SQLITE_OPEN_READONLY : SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE
         try check(sqlite3_open_v2(location.description, &_handle, flags | SQLITE_OPEN_FULLMUTEX, nil))
         queue.setSpecific(key: SQLConnection.queueKey, value: queueContext)
+		self.location = location
     }
 
     /// Initializes a new connection to a database.
@@ -135,6 +136,9 @@ public final class SQLConnection {
     /// Whether or not the database was opened in a read-only state.
     public var readonly: Bool { return sqlite3_db_readonly(handle, nil) == 1 }
 
+	/// Where the database is stored (at the time it was opened)
+	public var location: Location = .inMemory
+	
     /// The last rowid inserted into the database via this connection.
     public var lastInsertRowid: Int64 {
         return sqlite3_last_insert_rowid(handle)
