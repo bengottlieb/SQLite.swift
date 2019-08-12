@@ -333,10 +333,10 @@ class QueryTests : XCTestCase {
     }
 
     func test_scalar_returnsScalarExpression() {
-        AssertSQL("SELECT \"int\" FROM \"table\"", table.select(int) as ScalarQuery<Int>)
-        AssertSQL("SELECT \"intOptional\" FROM \"table\"", table.select(intOptional) as ScalarQuery<Int?>)
-        AssertSQL("SELECT DISTINCT \"int\" FROM \"table\"", table.select(distinct: int) as ScalarQuery<Int>)
-        AssertSQL("SELECT DISTINCT \"intOptional\" FROM \"table\"", table.select(distinct: intOptional) as ScalarQuery<Int?>)
+        AssertSQL("SELECT \"int\" FROM \"table\"", table.select(int) as SQLScalarQuery<Int>)
+        AssertSQL("SELECT \"intOptional\" FROM \"table\"", table.select(intOptional) as SQLScalarQuery<Int?>)
+        AssertSQL("SELECT DISTINCT \"int\" FROM \"table\"", table.select(distinct: int) as SQLScalarQuery<Int>)
+        AssertSQL("SELECT DISTINCT \"intOptional\" FROM \"table\"", table.select(distinct: intOptional) as SQLScalarQuery<Int?>)
     }
 
     func test_subscript_withExpression_returnsNamespacedExpression() {
@@ -433,13 +433,13 @@ class QueryIntegrationTests : SQLiteTestCase {
     func test_select_codable() throws {
         let table = SQLTable("codable")
         try db.run(table.create { builder in
-            builder.column(Expression<Int>("int"))
-            builder.column(Expression<String>("string"))
-            builder.column(Expression<Bool>("bool"))
-            builder.column(Expression<Double>("float"))
-            builder.column(Expression<Double>("double"))
-            builder.column(Expression<String?>("optional"))
-            builder.column(Expression<Data>("sub"))
+            builder.column(SQLExpression<Int>("int"))
+            builder.column(SQLExpression<String>("string"))
+            builder.column(SQLExpression<Bool>("bool"))
+            builder.column(SQLExpression<Double>("float"))
+            builder.column(SQLExpression<Double>("double"))
+            builder.column(SQLExpression<String?>("optional"))
+            builder.column(SQLExpression<Data>("sub"))
         })
 
         let value1 = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: nil)

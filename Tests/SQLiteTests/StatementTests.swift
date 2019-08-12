@@ -17,7 +17,7 @@ class StatementTests : SQLiteTestCase {
 
     func test_zero_sized_blob_returns_null() {
         let blobs = SQLTable("blobs")
-        let blobColumn = SQLExpression<Blob>("blob_column")
+        let blobColumn = SQLExpression<SQLBlob>("blob_column")
         try! db.run(blobs.create { $0.column(blobColumn) })
         try! db.run(blobs.insert(blobColumn <- SQLBlob(bytes: [])))
         let blobValue = try! db.scalar(blobs.select(blobColumn).limit(1, offset: 0))

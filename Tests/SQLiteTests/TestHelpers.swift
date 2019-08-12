@@ -78,8 +78,8 @@ class SQLiteTestCase : XCTestCase {
 let bool = SQLExpression<Bool>("bool")
 let boolOptional = SQLExpression<Bool?>("boolOptional")
 
-let data = SQLExpression<Blob>("blob")
-let dataOptional = SQLExpression<Blob?>("blobOptional")
+let data = SQLExpression<SQLBlob>("blob")
+let dataOptional = SQLExpression<SQLBlob?>("blobOptional")
 
 let date = SQLExpression<Date>("date")
 let dateOptional = SQLExpression<Date?>("dateOptional")
