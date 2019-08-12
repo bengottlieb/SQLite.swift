@@ -3,12 +3,12 @@ import XCTest
 
 class SQLiteTestCase : XCTestCase {
     private var trace:[String: Int]!
-    var db:Connection!
-    let users = Table("users")
+    var db:SQLConnection!
+    let users = SQLTable("users")
 
     override func setUp() {
         super.setUp()
-        db = try! Connection()
+        db = try! SQLConnection()
         trace = [String:Int]()
 
         db.trace { SQL in
@@ -40,7 +40,7 @@ class SQLiteTestCase : XCTestCase {
         for name in names { try InsertUser(name) }
     }
 
-    @discardableResult func InsertUser(_ name: String, age: Int? = nil, admin: Bool = false) throws -> Statement {
+    @discardableResult func InsertUser(_ name: String, age: Int? = nil, admin: Bool = false) throws -> SQLStatement {
         return try db.run(
             "INSERT INTO \"users\" (email, age, admin) values (?, ?, ?)",
             "\(name)@example.com", age?.datatypeValue, admin.datatypeValue
@@ -55,7 +55,7 @@ class SQLiteTestCase : XCTestCase {
         )
     }
 
-    func AssertSQL(_ SQL: String, _ statement: Statement, _ message: String? = nil, file: StaticString = #file, line: UInt = #line) {
+    func AssertSQL(_ SQL: String, _ statement: SQLStatement, _ message: String? = nil, file: StaticString = #file, line: UInt = #line) {
         try! statement.run()
         AssertSQL(SQL, 1, message, file: file, line: line)
         if let count = trace[SQL] { trace[SQL] = count - 1 }
@@ -75,35 +75,35 @@ class SQLiteTestCase : XCTestCase {
 
 }
 
-let bool = Expression<Bool>("bool")
-let boolOptional = Expression<Bool?>("boolOptional")
+let bool = SQLExpression<Bool>("bool")
+let boolOptional = SQLExpression<Bool?>("boolOptional")
 
-let data = Expression<Blob>("blob")
-let dataOptional = Expression<Blob?>("blobOptional")
+let data = SQLExpression<Blob>("blob")
+let dataOptional = SQLExpression<Blob?>("blobOptional")
 
-let date = Expression<Date>("date")
-let dateOptional = Expression<Date?>("dateOptional")
+let date = SQLExpression<Date>("date")
+let dateOptional = SQLExpression<Date?>("dateOptional")
 
-let double = Expression<Double>("double")
-let doubleOptional = Expression<Double?>("doubleOptional")
+let double = SQLExpression<Double>("double")
+let doubleOptional = SQLExpression<Double?>("doubleOptional")
 
-let int = Expression<Int>("int")
-let intOptional = Expression<Int?>("intOptional")
+let int = SQLExpression<Int>("int")
+let intOptional = SQLExpression<Int?>("intOptional")
 
-let int64 = Expression<Int64>("int64")
-let int64Optional = Expression<Int64?>("int64Optional")
+let int64 = SQLExpression<Int64>("int64")
+let int64Optional = SQLExpression<Int64?>("int64Optional")
 
-let string = Expression<String>("string")
-let stringOptional = Expression<String?>("stringOptional")
+let string = SQLExpression<String>("string")
+let stringOptional = SQLExpression<String?>("stringOptional")
 
 func AssertSQL(_ expression1: @autoclosure () -> String, _ expression2: @autoclosure () -> Expressible, file: StaticString = #file, line: UInt = #line) {
     XCTAssertEqual(expression1(), expression2().asSQL(), file: file, line: line)
 }
 
-let table = Table("table")
-let qualifiedTable = Table("table", database: "main")
-let virtualTable = VirtualTable("virtual_table")
-let _view = View("view") // avoid Mac XCTestCase collision
+let table = SQLTable("table")
+let qualifiedTable = SQLTable("table", database: "main")
+let virtualTable = SQLVirtualTable("virtual_table")
+let _view = SQLView("view") // avoid Mac XCTestCase collision
 
 class TestCodable: Codable {
     let int: Int

@@ -22,27 +22,27 @@ class ConnectionTests : SQLiteTestCase {
     }
 
     func test_init_withInMemory_returnsInMemoryConnection() {
-        let db = try! Connection(.inMemory)
+        let db = try! SQLConnection(.inMemory)
         XCTAssertEqual("", db.description)
     }
 
     func test_init_returnsInMemoryByDefault() {
-        let db = try! Connection()
+        let db = try! SQLConnection()
         XCTAssertEqual("", db.description)
     }
 
     func test_init_withTemporary_returnsTemporaryConnection() {
-        let db = try! Connection(.temporary)
+        let db = try! SQLConnection(.temporary)
         XCTAssertEqual("", db.description)
     }
 
     func test_init_withURI_returnsURIConnection() {
-        let db = try! Connection(.uri("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3"))
+        let db = try! SQLConnection(.uri("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3"))
         XCTAssertEqual("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3", db.description)
     }
 
     func test_init_withString_returnsURIConnection() {
-        let db = try! Connection("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3")
+        let db = try! SQLConnection("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3")
         XCTAssertEqual("\(NSTemporaryDirectory())/SQLite.swift Tests.sqlite3", db.description)
     }
 
@@ -51,7 +51,7 @@ class ConnectionTests : SQLiteTestCase {
     }
 
     func test_readonly_returnsTrueOnReadOnlyConnections() {
-        let db = try! Connection(readonly: true)
+        let db = try! SQLConnection(readonly: true)
         XCTAssertTrue(db.readonly)
     }
 
@@ -211,7 +211,7 @@ class ConnectionTests : SQLiteTestCase {
     }
 
     func test_savepoint_beginsAndCommitsSavepoints() {
-        let db:Connection = self.db
+        let db:SQLConnection = self.db
 
         try! db.savepoint("1") {
             try db.savepoint("2") {
@@ -229,7 +229,7 @@ class ConnectionTests : SQLiteTestCase {
     }
 
     func test_savepoint_beginsAndRollsSavepointsBack() {
-        let db:Connection = self.db
+        let db:SQLConnection = self.db
         let stmt = try! db.prepare("INSERT INTO users (email) VALUES (?)", "alice@example.com")
 
         do {
@@ -260,7 +260,7 @@ class ConnectionTests : SQLiteTestCase {
     func test_updateHook_setsUpdateHook_withInsert() {
         async { done in
             db.updateHook { operation, db, table, rowid in
-                XCTAssertEqual(Connection.Operation.insert, operation)
+                XCTAssertEqual(SQLConnection.Operation.insert, operation)
                 XCTAssertEqual("main", db)
                 XCTAssertEqual("users", table)
                 XCTAssertEqual(1, rowid)
@@ -274,7 +274,7 @@ class ConnectionTests : SQLiteTestCase {
         try! InsertUser("alice")
         async { done in
             db.updateHook { operation, db, table, rowid in
-                XCTAssertEqual(Connection.Operation.update, operation)
+                XCTAssertEqual(SQLConnection.Operation.update, operation)
                 XCTAssertEqual("main", db)
                 XCTAssertEqual("users", table)
                 XCTAssertEqual(1, rowid)
@@ -288,7 +288,7 @@ class ConnectionTests : SQLiteTestCase {
         try! InsertUser("alice")
         async { done in
             db.updateHook { operation, db, table, rowid in
-                XCTAssertEqual(Connection.Operation.delete, operation)
+                XCTAssertEqual(SQLConnection.Operation.delete, operation)
                 XCTAssertEqual("main", db)
                 XCTAssertEqual("users", table)
                 XCTAssertEqual(1, rowid)
@@ -392,7 +392,7 @@ class ConnectionTests : SQLiteTestCase {
         // test can fail on iOS/tvOS 9.x: SQLite compile-time differences?
         guard #available(iOS 10.0, OSX 10.10, tvOS 10.0, watchOS 2.2, *) else  { return }
 
-        let conn = try! Connection("\(NSTemporaryDirectory())/\(UUID().uuidString)")
+        let conn = try! SQLConnection("\(NSTemporaryDirectory())/\(UUID().uuidString)")
         try! conn.execute("DROP TABLE IF EXISTS test; CREATE TABLE test(value);")
         try! conn.run("INSERT INTO test(value) VALUES(?)", 0)
         let queue = DispatchQueue(label: "Readers", attributes: [.concurrent])
@@ -412,7 +412,7 @@ class ConnectionTests : SQLiteTestCase {
 
 
 class ResultTests : XCTestCase {
-    let connection = try! Connection(.inMemory)
+    let connection = try! SQLConnection(.inMemory)
 
     func test_init_with_ok_code_returns_nil() {
         XCTAssertNil(Result(errorCode: SQLITE_OK, connection: connection, statement: nil) as Result?)
@@ -444,7 +444,7 @@ class ResultTests : XCTestCase {
     }
 
     func test_description_contains_statement_and_error_code() {
-        let statement = try! Statement(connection, "SELECT 1")
+        let statement = try! SQLStatement(connection, "SELECT 1")
         XCTAssertEqual("not an error (SELECT 1) (code: 21)",
             Result(errorCode: SQLITE_MISUSE, connection: connection, statement: statement)?.description)
     }

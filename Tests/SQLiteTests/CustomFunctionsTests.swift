@@ -2,8 +2,8 @@ import XCTest
 import SQLite
 
 class CustomFunctionNoArgsTests : SQLiteTestCase {
-    typealias FunctionNoOptional              = ()  -> Expression<String>
-    typealias FunctionResultOptional          = ()  -> Expression<String?>
+    typealias FunctionNoOptional              = ()  -> SQLExpression<String>
+    typealias FunctionResultOptional          = ()  -> SQLExpression<String?>
 
     func testFunctionNoOptional() {
         let _: FunctionNoOptional = try! db.createFunction("test", deterministic: true) {
@@ -23,10 +23,10 @@ class CustomFunctionNoArgsTests : SQLiteTestCase {
 }
 
 class CustomFunctionWithOneArgTests : SQLiteTestCase {
-    typealias FunctionNoOptional              = (Expression<String>)  -> Expression<String>
-    typealias FunctionLeftOptional            = (Expression<String?>) -> Expression<String>
-    typealias FunctionResultOptional          = (Expression<String>)  -> Expression<String?>
-    typealias FunctionLeftResultOptional      = (Expression<String?>) -> Expression<String?>
+    typealias FunctionNoOptional              = (SQLExpression<String>)  -> SQLExpression<String>
+    typealias FunctionLeftOptional            = (SQLExpression<String?>) -> SQLExpression<String>
+    typealias FunctionResultOptional          = (SQLExpression<String>)  -> SQLExpression<String?>
+    typealias FunctionLeftResultOptional      = (SQLExpression<String?>) -> SQLExpression<String?>
 
     func testFunctionNoOptional() {
         let _: FunctionNoOptional = try! db.createFunction("test", deterministic: true) { a in
@@ -62,14 +62,14 @@ class CustomFunctionWithOneArgTests : SQLiteTestCase {
 }
 
 class CustomFunctionWithTwoArgsTests : SQLiteTestCase {
-    typealias FunctionNoOptional              = (Expression<String>,  Expression<String>)  -> Expression<String>
-    typealias FunctionLeftOptional            = (Expression<String?>, Expression<String>)  -> Expression<String>
-    typealias FunctionRightOptional           = (Expression<String>,  Expression<String?>) -> Expression<String>
-    typealias FunctionResultOptional          = (Expression<String>,  Expression<String>)  -> Expression<String?>
-    typealias FunctionLeftRightOptional       = (Expression<String?>, Expression<String?>) -> Expression<String>
-    typealias FunctionLeftResultOptional      = (Expression<String?>, Expression<String>)  -> Expression<String?>
-    typealias FunctionRightResultOptional     = (Expression<String>,  Expression<String?>) -> Expression<String?>
-    typealias FunctionLeftRightResultOptional = (Expression<String?>, Expression<String?>) -> Expression<String?>
+    typealias FunctionNoOptional              = (SQLExpression<String>,  SQLExpression<String>)  -> SQLExpression<String>
+    typealias FunctionLeftOptional            = (SQLExpression<String?>, SQLExpression<String>)  -> SQLExpression<String>
+    typealias FunctionRightOptional           = (SQLExpression<String>,  SQLExpression<String?>) -> SQLExpression<String>
+    typealias FunctionResultOptional          = (SQLExpression<String>,  SQLExpression<String>)  -> SQLExpression<String?>
+    typealias FunctionLeftRightOptional       = (SQLExpression<String?>, SQLExpression<String?>) -> SQLExpression<String>
+    typealias FunctionLeftResultOptional      = (SQLExpression<String?>, SQLExpression<String>)  -> SQLExpression<String?>
+    typealias FunctionRightResultOptional     = (SQLExpression<String>,  SQLExpression<String?>) -> SQLExpression<String?>
+    typealias FunctionLeftRightResultOptional = (SQLExpression<String?>, SQLExpression<String?>) -> SQLExpression<String?>
 
     func testNoOptional() {
         let _: FunctionNoOptional = try! db.createFunction("test", deterministic: true) { a, b in

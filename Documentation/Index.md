@@ -158,7 +158,7 @@ extend `Connection` with methods to change the database key:
 ```swift
 import SQLite
 
-let db = try Connection("path/to/db.sqlite3")
+let db = try SQLConnection("path/to/db.sqlite3")
 try db.key("secret")
 try db.rekey("another secret")
 ```
@@ -241,7 +241,7 @@ connection is initialized with a path to a database. SQLite will attempt to
 create the database file if it does not already exist.
 
 ```swift
-let db = try Connection("path/to/db.sqlite3")
+let db = try SQLConnection("path/to/db.sqlite3")
 ```
 
 
@@ -255,7 +255,7 @@ let path = NSSearchPathForDirectoriesInDomains(
     .documentDirectory, .userDomainMask, true
 ).first!
 
-let db = try Connection("\(path)/db.sqlite3")
+let db = try SQLConnection("\(path)/db.sqlite3")
 ```
 
 On macOS, you can use your app’s **Application Support** directory:
@@ -270,7 +270,7 @@ try FileManager.default.createDirectoryAtPath(
     path, withIntermediateDirectories: true, attributes: nil
 )
 
-let db = try Connection("\(path)/db.sqlite3")
+let db = try SQLConnection("\(path)/db.sqlite3")
 ```
 
 
@@ -283,7 +283,7 @@ establish a _read-only_ connection to it.
 ```swift
 let path = Bundle.main.pathForResource("db", ofType: "sqlite3")!
 
-let db = try Connection(path, readonly: true)
+let db = try SQLConnection(path, readonly: true)
 ```
 
 > _Note:_ Signed applications cannot modify their bundle resources. If you
@@ -304,13 +304,13 @@ If you omit the path, SQLite.swift will provision an [in-memory
 database](https://www.sqlite.org/inmemorydb.html).
 
 ```swift
-let db = try Connection() // equivalent to `Connection(.inMemory)`
+let db = try SQLConnection() // equivalent to `SQLConnection(.inMemory)`
 ```
 
 To create a temporary, disk-backed database, pass an empty file name.
 
 ```swift
-let db = try Connection(.temporary)
+let db = try SQLConnection(.temporary)
 ```
 
 In-memory databases are automatically deleted when the database connection is
@@ -821,7 +821,7 @@ We can access the results of more complex expressions by holding onto a
 reference of the expression itself.
 
 ```swift
-let sentence = name + " is " + cast(age) as Expression<String?> + " years old!"
+let sentence = name + " is " + cast(age) as SQLExpression<String?> + " years old!"
 for user in users.select(sentence) {
     print(user[sentence])
     // Optional("Alice is 30 years old!")
@@ -1418,7 +1418,7 @@ transparently bridge `Date` objects through Swift’s `String` types.
 We can use these types directly in SQLite statements.
 
 ```swift
-let published_at = Expression<Date>("published_at")
+let published_at = SQLExpression<Date>("published_at")
 
 let published = posts.filter(published_at <= Date())
 // SELECT * FROM "posts" WHERE "published_at" <= '2014-11-18T12:45:30.000'
@@ -1436,12 +1436,12 @@ We can bridge any type that can be initialized from and encoded to `Data`.
 ```swift
 extension UIImage: Value {
     public class var declaredDatatype: String {
-        return Blob.declaredDatatype
+        return SQLBlob.declaredDatatype
     }
-    public class func fromDatatypeValue(blobValue: Blob) -> UIImage {
+    public class func fromDatatypeValue(blobValue: SQLBlob) -> UIImage {
         return UIImage(data: Data.fromDatatypeValue(blobValue))!
     }
-    public var datatypeValue: Blob {
+    public var datatypeValue: SQLBlob {
         return UIImagePNGRepresentation(self)!.datatypeValue
     }
 
@@ -1645,7 +1645,7 @@ write the following:
 ```swift
 import MobileCoreServices
 
-let typeConformsTo: (Expression<String>, Expression<String>) -> Expression<Bool> = (
+let typeConformsTo: (SQLExpression<String>, SQLExpression<String>) -> SQLExpression<Bool> = (
     try db.createFunction("typeConformsTo", deterministic: true) { UTI, conformsToUTI in
         return UTTypeConformsTo(UTI, conformsToUTI)
     }
@@ -1674,7 +1674,7 @@ accepted.
 
 ```swift
 let attachments = Table("attachments")
-let UTI = Expression<String>("UTI")
+let UTI = SQLExpression<String>("UTI")
 
 let images = attachments.filter(typeConformsTo(UTI, kUTTypeImage))
 // SELECT * FROM "attachments" WHERE "typeConformsTo"("UTI", 'public.image')
@@ -1748,9 +1748,9 @@ try db.run(emails.create(.FTS4([subject, body], tokenize: .Porter)))
 We can set the full range of parameters by creating a `FTS4Config` object.
 
 ```swift
-let emails = VirtualTable("emails")
-let subject = Expression<String>("subject")
-let body = Expression<String>("body")
+let emails = SQLVirtualTable("emails")
+let subject = SQLExpression<String>("subject")
+let body = SQLExpression<String>("body")
 let config = FTS4Config()
     .column(subject)
     .column(body, [.unindexed])
@@ -1771,7 +1771,7 @@ try db.run(emails.insert(
     body <- "Hey, I was just wondering...did you get my last email?"
 ))
 
-let wonderfulEmails: QueryType = emails.match("wonder*")
+let wonderfulEmails: SQLQueryType = emails.match("wonder*")
 // SELECT * FROM "emails" WHERE "emails" MATCH 'wonder*'
 
 let replies = emails.filter(subject.match("Re:*"))
@@ -1785,9 +1785,9 @@ When linking against a version of SQLite with
 table in a similar fashion.
 
 ```swift
-let emails = VirtualTable("emails")
-let subject = Expression<String>("subject")
-let body = Expression<String>("body")
+let emails = SQLVirtualTable("emails")
+let subject = SQLExpression<String>("subject")
+let body = SQLExpression<String>("body")
 let config = FTS5Config()
     .column(subject)
     .column(body, [.unindexed])

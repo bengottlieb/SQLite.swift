@@ -12,8 +12,8 @@ class CoreFunctionsTests : XCTestCase {
     }
 
     func test_random_generatesExpressionWithRandomFunction() {
-        AssertSQL("random()", Expression<Int64>.random())
-        AssertSQL("random()", Expression<Int>.random())
+        AssertSQL("random()", SQLExpression<Int64>.random())
+        AssertSQL("random()", SQLExpression<Int>.random())
     }
 
     func test_length_wrapsStringExpressionWithLengthFunction() {
@@ -38,14 +38,14 @@ class CoreFunctionsTests : XCTestCase {
         AssertSQL("(\"string\" LIKE '%\\%' ESCAPE '\\')", string.like("%\\%", escape: "\\"))
         AssertSQL("(\"stringOptional\" LIKE '_\\_' ESCAPE '\\')", stringOptional.like("_\\_", escape: "\\"))
         
-        AssertSQL("(\"string\" LIKE \"a\")", string.like(Expression<String>("a")))
-        AssertSQL("(\"stringOptional\" LIKE \"a\")", stringOptional.like(Expression<String>("a")))
+        AssertSQL("(\"string\" LIKE \"a\")", string.like(SQLExpression<String>("a")))
+        AssertSQL("(\"stringOptional\" LIKE \"a\")", stringOptional.like(SQLExpression<String>("a")))
         
-        AssertSQL("(\"string\" LIKE \"a\" ESCAPE '\\')", string.like(Expression<String>("a"), escape: "\\"))
-        AssertSQL("(\"stringOptional\" LIKE \"a\" ESCAPE '\\')", stringOptional.like(Expression<String>("a"), escape: "\\"))
+        AssertSQL("(\"string\" LIKE \"a\" ESCAPE '\\')", string.like(SQLExpression<String>("a"), escape: "\\"))
+        AssertSQL("(\"stringOptional\" LIKE \"a\" ESCAPE '\\')", stringOptional.like(SQLExpression<String>("a"), escape: "\\"))
         
-        AssertSQL("('string' LIKE \"a\")", "string".like(Expression<String>("a")))
-        AssertSQL("('string' LIKE \"a\" ESCAPE '\\')", "string".like(Expression<String>("a"), escape: "\\"))
+        AssertSQL("('string' LIKE \"a\")", "string".like(SQLExpression<String>("a")))
+        AssertSQL("('string' LIKE \"a\" ESCAPE '\\')", "string".like(SQLExpression<String>("a"), escape: "\\"))
     }
 
     func test_glob_buildsExpressionWithGlobOperator() {

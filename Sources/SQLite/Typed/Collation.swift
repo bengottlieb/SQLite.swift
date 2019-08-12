@@ -45,8 +45,8 @@ public enum Collation {
 
 extension Collation : Expressible {
 
-    public var expression: Expression<Void> {
-        return Expression(literal: description)
+    public var expression: SQLExpression<Void> {
+        return SQLExpression(literal: description)
     }
 
 }

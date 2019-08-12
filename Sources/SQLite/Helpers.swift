@@ -32,10 +32,10 @@ import CSQLite
 import SQLite3
 #endif
 
-public typealias Star = (Expression<Binding>?, Expression<Binding>?) -> Expression<Void>
+public typealias Star = (SQLExpression<Binding>?, SQLExpression<Binding>?) -> SQLExpression<Void>
 
-public func *(_: Expression<Binding>?, _: Expression<Binding>?) -> Expression<Void> {
-    return Expression(literal: "*")
+public func *(_: SQLExpression<Binding>?, _: SQLExpression<Binding>?) -> SQLExpression<Void> {
+    return SQLExpression(literal: "*")
 }
 
 public protocol _OptionalType {
@@ -69,11 +69,11 @@ extension String {
             template.append(expression.template)
             bindings.append(contentsOf: expression.bindings)
         }
-        return Expression<Void>(template.joined(separator: self), bindings)
+        return SQLExpression<Void>(template.joined(separator: self), bindings)
     }
 
-    func infix<T>(_ lhs: Expressible, _ rhs: Expressible, wrap: Bool = true) -> Expression<T> {
-        let expression = Expression<T>(" \(self) ".join([lhs, rhs]).expression)
+    func infix<T>(_ lhs: Expressible, _ rhs: Expressible, wrap: Bool = true) -> SQLExpression<T> {
+        let expression = SQLExpression<T>(" \(self) ".join([lhs, rhs]).expression)
         guard wrap else {
             return expression
         }
@@ -81,18 +81,18 @@ extension String {
     }
 
     func prefix(_ expressions: Expressible) -> Expressible {
-        return "\(self) ".wrap(expressions) as Expression<Void>
+        return "\(self) ".wrap(expressions) as SQLExpression<Void>
     }
 
     func prefix(_ expressions: [Expressible]) -> Expressible {
-        return "\(self) ".wrap(expressions) as Expression<Void>
+        return "\(self) ".wrap(expressions) as SQLExpression<Void>
     }
 
-    func wrap<T>(_ expression: Expressible) -> Expression<T> {
-        return Expression("\(self)(\(expression.expression.template))", expression.expression.bindings)
+    func wrap<T>(_ expression: Expressible) -> SQLExpression<T> {
+        return SQLExpression("\(self)(\(expression.expression.template))", expression.expression.bindings)
     }
 
-    func wrap<T>(_ expressions: [Expressible]) -> Expression<T> {
+    func wrap<T>(_ expressions: [Expressible]) -> SQLExpression<T> {
         return wrap(", ".join(expressions))
     }
 
@@ -102,7 +102,7 @@ func transcode(_ literal: Binding?) -> String {
     guard let literal = literal else { return "NULL" }
 
     switch literal {
-    case let blob as Blob:
+    case let blob as SQLBlob:
         return blob.description
     case let string as String:
         return string.quote("'")

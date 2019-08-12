@@ -22,7 +22,7 @@
 // THE SOFTWARE.
 //
 
-public struct Blob {
+public struct SQLBlob {
 
     public let bytes: [UInt8]
 
@@ -43,7 +43,7 @@ public struct Blob {
 
 }
 
-extension Blob : CustomStringConvertible {
+extension SQLBlob : CustomStringConvertible {
 
     public var description: String {
         return "x'\(toHex())'"
@@ -51,10 +51,10 @@ extension Blob : CustomStringConvertible {
 
 }
 
-extension Blob : Equatable {
+extension SQLBlob : Equatable {
 
 }
 
-public func ==(lhs: Blob, rhs: Blob) -> Bool {
+public func ==(lhs: SQLBlob, rhs: SQLBlob) -> Bool {
     return lhs.bytes == rhs.bytes
 }

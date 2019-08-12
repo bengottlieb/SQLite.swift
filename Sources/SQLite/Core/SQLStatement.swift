@@ -33,13 +33,13 @@ import SQLite3
 #endif
 
 /// A single SQL statement.
-public final class Statement {
+public final class SQLStatement {
 
     fileprivate var handle: OpaquePointer? = nil
 
-    fileprivate let connection: Connection
+    fileprivate let connection: SQLConnection
 
-    init(_ connection: Connection, _ SQL: String) throws {
+    init(_ connection: SQLConnection, _ SQL: String) throws {
         self.connection = connection
         try connection.check(sqlite3_prepare_v2(connection.handle, SQL, -1, &handle, nil))
     }
@@ -55,14 +55,14 @@ public final class Statement {
     }
 
     /// A cursor pointing to the current row.
-    public lazy var row: Cursor = Cursor(self)
+    public lazy var row: SQLCursor = SQLCursor(self)
 
     /// Binds a list of parameters to a statement.
     ///
     /// - Parameter values: A list of parameters to bind to the statement.
     ///
     /// - Returns: The statement object (useful for chaining).
-    public func bind(_ values: Binding?...) -> Statement {
+    public func bind(_ values: Binding?...) -> SQLStatement {
         return bind(values)
     }
 
@@ -71,7 +71,7 @@ public final class Statement {
     /// - Parameter values: A list of parameters to bind to the statement.
     ///
     /// - Returns: The statement object (useful for chaining).
-    public func bind(_ values: [Binding?]) -> Statement {
+    public func bind(_ values: [Binding?]) -> SQLStatement {
         if values.isEmpty { return self }
         reset()
         guard values.count == Int(sqlite3_bind_parameter_count(handle)) else {
@@ -87,7 +87,7 @@ public final class Statement {
     ///   statement.
     ///
     /// - Returns: The statement object (useful for chaining).
-    public func bind(_ values: [String: Binding?]) -> Statement {
+    public func bind(_ values: [String: Binding?]) -> SQLStatement {
         reset()
         for (name, value) in values {
             let idx = sqlite3_bind_parameter_index(handle, name)
@@ -102,7 +102,7 @@ public final class Statement {
     fileprivate func bind(_ value: Binding?, atIndex idx: Int) {
         if value == nil {
             sqlite3_bind_null(handle, Int32(idx))
-        } else if let value = value as? Blob {
+        } else if let value = value as? SQLBlob {
             sqlite3_bind_blob(handle, Int32(idx), value.bytes, Int32(value.bytes.count), SQLITE_TRANSIENT)
         } else if let value = value as? Double {
             sqlite3_bind_double(handle, Int32(idx), value)
@@ -124,7 +124,7 @@ public final class Statement {
     /// - Throws: `Result.Error` if query execution fails.
     ///
     /// - Returns: The statement object (useful for chaining).
-    @discardableResult public func run(_ bindings: Binding?...) throws -> Statement {
+    @discardableResult public func run(_ bindings: Binding?...) throws -> SQLStatement {
         guard bindings.isEmpty else {
             return try run(bindings)
         }
@@ -139,7 +139,7 @@ public final class Statement {
     /// - Throws: `Result.Error` if query execution fails.
     ///
     /// - Returns: The statement object (useful for chaining).
-    @discardableResult public func run(_ bindings: [Binding?]) throws -> Statement {
+    @discardableResult public func run(_ bindings: [Binding?]) throws -> SQLStatement {
         return try bind(bindings).run()
     }
 
@@ -149,7 +149,7 @@ public final class Statement {
     /// - Throws: `Result.Error` if query execution fails.
     ///
     /// - Returns: The statement object (useful for chaining).
-    @discardableResult public func run(_ bindings: [String: Binding?]) throws -> Statement {
+    @discardableResult public func run(_ bindings: [String: Binding?]) throws -> SQLStatement {
         return try bind(bindings).run()
     }
 
@@ -193,9 +193,9 @@ public final class Statement {
 
 }
 
-extension Statement : Sequence {
+extension SQLStatement : Sequence {
 
-    public func makeIterator() -> Statement {
+    public func makeIterator() -> SQLStatement {
         reset(clearBindings: false)
         return self
     }
@@ -221,14 +221,14 @@ extension Array {
     }
 }
 
-extension Statement : FailableIterator {
+extension SQLStatement : FailableIterator {
     public typealias Element = [Binding?]
     public func failableNext() throws -> [Binding?]? {
         return try step() ? Array(row) : nil
     }
 }
 
-extension Statement : CustomStringConvertible {
+extension SQLStatement : CustomStringConvertible {
 
     public var description: String {
         return String(cString: sqlite3_sql(handle))
@@ -236,13 +236,13 @@ extension Statement : CustomStringConvertible {
 
 }
 
-public struct Cursor {
+public struct SQLCursor {
 
     fileprivate let handle: OpaquePointer
 
     fileprivate let columnCount: Int
 
-    fileprivate init(_ statement: Statement) {
+    fileprivate init(_ statement: SQLStatement) {
         handle = statement.handle!
         columnCount = statement.columnCount
     }
@@ -259,14 +259,14 @@ public struct Cursor {
         return String(cString: UnsafePointer(sqlite3_column_text(handle, Int32(idx))))
     }
 
-    public subscript(idx: Int) -> Blob {
+    public subscript(idx: Int) -> SQLBlob {
         if let pointer = sqlite3_column_blob(handle, Int32(idx)) {
             let length = Int(sqlite3_column_bytes(handle, Int32(idx)))
-            return Blob(bytes: pointer, length: length)
+            return SQLBlob(bytes: pointer, length: length)
         } else {
             // The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
             // https://www.sqlite.org/c3ref/column_blob.html
-            return Blob(bytes: [])
+            return SQLBlob(bytes: [])
         }
     }
 
@@ -283,12 +283,12 @@ public struct Cursor {
 }
 
 /// Cursors provide direct access to a statement’s current row.
-extension Cursor : Sequence {
+extension SQLCursor : Sequence {
 
     public subscript(idx: Int) -> Binding? {
         switch sqlite3_column_type(handle, Int32(idx)) {
         case SQLITE_BLOB:
-            return self[idx] as Blob
+            return self[idx] as SQLBlob
         case SQLITE_FLOAT:
             return self[idx] as Double
         case SQLITE_INTEGER:

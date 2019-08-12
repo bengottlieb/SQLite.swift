@@ -22,9 +22,9 @@
 // THE SOFTWARE.
 //
 
-extension Module {
-    public static func FTS5(_ config: FTS5Config) -> Module {
-        return Module(name: "fts5", arguments: config.arguments())
+extension SQLModule {
+    public static func FTS5(_ config: FTS5Config) -> SQLModule {
+        return SQLModule(name: "fts5", arguments: config.arguments())
     }
 }
 
@@ -79,7 +79,7 @@ open class FTS5Config : FTSConfig {
         var options = super.options()
         options.append("content_rowid", value: contentRowId)
         if let columnSize = columnSize {
-            options.append("columnsize", value: Expression<Int>(value: columnSize))
+            options.append("columnsize", value: SQLExpression<Int>(value: columnSize))
         }
         options.append("detail", value: detail)
         return options
@@ -88,7 +88,7 @@ open class FTS5Config : FTSConfig {
     override func formatColumnDefinitions() -> [Expressible] {
         return columnDefinitions.map { definition in
             if definition.options.contains(.unindexed) {
-                return " ".join([definition.0, Expression<Void>(literal: "UNINDEXED")])
+                return " ".join([definition.0, SQLExpression<Void>(literal: "UNINDEXED")])
             } else {
                 return definition.0
             }

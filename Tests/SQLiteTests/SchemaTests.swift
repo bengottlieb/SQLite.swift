@@ -723,7 +723,7 @@ class SchemaTests : XCTestCase {
     }
 
     func test_rename_compilesAlterTableRenameToExpression() {
-        XCTAssertEqual("ALTER TABLE \"old\" RENAME TO \"table\"", Table("old").rename(table))
+        XCTAssertEqual("ALTER TABLE \"old\" RENAME TO \"table\"", SQLTable("old").rename(table))
     }
 
     func test_createIndex_compilesCreateIndexExpression() {
@@ -774,14 +774,14 @@ class SchemaTests : XCTestCase {
     func test_create_onVirtualTable_compilesCreateVirtualTableExpression() {
         XCTAssertEqual(
             "CREATE VIRTUAL TABLE \"virtual_table\" USING \"custom\"('foo', 'bar')",
-            virtualTable.create(Module("custom", ["foo", "bar"]))
+            virtualTable.create(SQLModule("custom", ["foo", "bar"]))
         )
     }
 
     func test_rename_onVirtualTable_compilesAlterTableRenameToExpression() {
         XCTAssertEqual(
             "ALTER TABLE \"old\" RENAME TO \"virtual_table\"",
-            VirtualTable("old").rename(virtualTable)
+            SQLVirtualTable("old").rename(virtualTable)
         )
     }
 

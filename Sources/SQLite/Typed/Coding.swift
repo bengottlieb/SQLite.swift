@@ -39,7 +39,7 @@ extension QueryType {
     ///   - otherSetters: Any other setters to include in the insert
     ///
     /// - Returns: An `INSERT` statement fort the encodable object
-    public func insert(_ encodable: Encodable, userInfo: [CodingUserInfoKey:Any] = [:], otherSetters: [Setter] = []) throws -> Insert {
+    public func insert(_ encodable: Encodable, userInfo: [CodingUserInfoKey:Any] = [:], otherSetters: [SQLSetter] = []) throws -> SQLInsert {
         let encoder = SQLiteEncoder(userInfo: userInfo)
         try encodable.encode(to: encoder)
         return self.insert(encoder.setters + otherSetters)
@@ -59,14 +59,14 @@ extension QueryType {
     ///   - otherSetters: Any other setters to include in the insert
     ///
     /// - Returns: An `UPDATE` statement fort the encodable object
-    public func update(_ encodable: Encodable, userInfo: [CodingUserInfoKey:Any] = [:], otherSetters: [Setter] = []) throws -> Update {
+    public func update(_ encodable: Encodable, userInfo: [CodingUserInfoKey:Any] = [:], otherSetters: [SQLSetter] = []) throws -> SQLUpdate {
         let encoder = SQLiteEncoder(userInfo: userInfo)
         try encodable.encode(to: encoder)
         return self.update(encoder.setters + otherSetters)
     }
 }
 
-extension Row {
+extension SQLRow {
     /// Decode an object from this row
     /// This method expects any custom nested types to be in the form of JSON data and does not handle
     /// any sort of object relationships. If you want to support relationships between objects you will
@@ -105,37 +105,37 @@ fileprivate class SQLiteEncoder: Encoder {
         }
 
         func encodeNil(forKey key: SQLiteEncoder.SQLiteKeyedEncodingContainer<Key>.Key) throws {
-            self.encoder.setters.append(Expression<String?>(key.stringValue) <- nil)
+            self.encoder.setters.append(SQLExpression<String?>(key.stringValue) <- nil)
         }
 
         func encode(_ value: Int, forKey key: SQLiteEncoder.SQLiteKeyedEncodingContainer<Key>.Key) throws {
-            self.encoder.setters.append(Expression(key.stringValue) <- value)
+            self.encoder.setters.append(SQLExpression(key.stringValue) <- value)
         }
 
         func encode(_ value: Bool, forKey key: Key) throws {
-            self.encoder.setters.append(Expression(key.stringValue) <- value)
+            self.encoder.setters.append(SQLExpression(key.stringValue) <- value)
         }
 
         func encode(_ value: Float, forKey key: Key) throws {
-            self.encoder.setters.append(Expression(key.stringValue) <- Double(value))
+            self.encoder.setters.append(SQLExpression(key.stringValue) <- Double(value))
         }
 
         func encode(_ value: Double, forKey key: Key) throws {
-            self.encoder.setters.append(Expression(key.stringValue) <- value)
+            self.encoder.setters.append(SQLExpression(key.stringValue) <- value)
         }
 
         func encode(_ value: String, forKey key: Key) throws {
-            self.encoder.setters.append(Expression(key.stringValue) <- value)
+            self.encoder.setters.append(SQLExpression(key.stringValue) <- value)
         }
 
         func encode<T>(_ value: T, forKey key: Key) throws where T : Swift.Encodable {
             if let data = value as? Data {
-                self.encoder.setters.append(Expression(key.stringValue) <- data)
+                self.encoder.setters.append(SQLExpression(key.stringValue) <- data)
             }
             else {
                 let encoded = try JSONEncoder().encode(value)
                 let string = String(data: encoded, encoding: .utf8)
-                self.encoder.setters.append(Expression(key.stringValue) <- string)
+                self.encoder.setters.append(SQLExpression(key.stringValue) <- string)
             }
         }
 
@@ -184,7 +184,7 @@ fileprivate class SQLiteEncoder: Encoder {
         }
     }
 
-    fileprivate var setters: [Setter] = []
+    fileprivate var setters: [SQLSetter] = []
     let codingPath: [CodingKey] = []
     let userInfo: [CodingUserInfoKey: Any]
 
@@ -210,9 +210,9 @@ fileprivate class SQLiteDecoder : Decoder {
         typealias Key = MyKey
 
         let codingPath: [CodingKey] = []
-        let row: Row
+        let row: SQLRow
 
-        init(row: Row) {
+        init(row: SQLRow) {
             self.row = row
         }
 
@@ -229,11 +229,11 @@ fileprivate class SQLiteDecoder : Decoder {
         }
 
         func decode(_ type: Bool.Type, forKey key: Key) throws -> Bool {
-            return try self.row.get(Expression(key.stringValue))
+            return try self.row.get(SQLExpression(key.stringValue))
         }
 
         func decode(_ type: Int.Type, forKey key: Key) throws -> Int {
-            return try self.row.get(Expression(key.stringValue))
+            return try self.row.get(SQLExpression(key.stringValue))
         }
 
         func decode(_ type: Int8.Type, forKey key: Key) throws -> Int8 {
@@ -274,23 +274,23 @@ fileprivate class SQLiteDecoder : Decoder {
         }
 
         func decode(_ type: Float.Type, forKey key: Key) throws -> Float {
-            return Float(try self.row.get(Expression<Double>(key.stringValue)))
+            return Float(try self.row.get(SQLExpression<Double>(key.stringValue)))
         }
 
         func decode(_ type: Double.Type, forKey key: Key) throws -> Double {
-            return try self.row.get(Expression(key.stringValue))
+            return try self.row.get(SQLExpression(key.stringValue))
         }
 
         func decode(_ type: String.Type, forKey key: Key) throws -> String {
-            return try self.row.get(Expression(key.stringValue))
+            return try self.row.get(SQLExpression(key.stringValue))
         }
 
         func decode<T>(_ type: T.Type, forKey key: Key) throws -> T where T: Swift.Decodable {
             if type == Data.self {
-                let data = try self.row.get(Expression<Data>(key.stringValue))
+                let data = try self.row.get(SQLExpression<Data>(key.stringValue))
                 return data as! T
             }
-            guard let JSONString = try self.row.get(Expression<String?>(key.stringValue)) else {
+            guard let JSONString = try self.row.get(SQLExpression<String?>(key.stringValue)) else {
                 throw DecodingError.typeMismatch(type, DecodingError.Context(codingPath: self.codingPath, debugDescription: "an unsupported type was found"))
             }
             guard let data = JSONString.data(using: .utf8) else {
@@ -316,11 +316,11 @@ fileprivate class SQLiteDecoder : Decoder {
         }
     }
 
-    let row: Row
+    let row: SQLRow
     let codingPath: [CodingKey] = []
     let userInfo: [CodingUserInfoKey: Any]
 
-    init(row: Row, userInfo: [CodingUserInfoKey: Any]) {
+    init(row: SQLRow, userInfo: [CodingUserInfoKey: Any]) {
         self.row = row
         self.userInfo = userInfo
     }

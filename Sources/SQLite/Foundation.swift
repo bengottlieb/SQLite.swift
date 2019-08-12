@@ -27,16 +27,16 @@ import Foundation
 extension Data : Value {
 
     public static var declaredDatatype: String {
-        return Blob.declaredDatatype
+        return SQLBlob.declaredDatatype
     }
 
-    public static func fromDatatypeValue(_ dataValue: Blob) -> Data {
+    public static func fromDatatypeValue(_ dataValue: SQLBlob) -> Data {
         return Data(dataValue.bytes)
     }
 
-    public var datatypeValue: Blob {
-        return withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> Blob in
-            return Blob(bytes: pointer.baseAddress!, length: count)
+    public var datatypeValue: SQLBlob {
+        return withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> SQLBlob in
+            return SQLBlob(bytes: pointer.baseAddress!, length: count)
         }
     }
 

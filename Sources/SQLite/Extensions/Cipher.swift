@@ -4,7 +4,7 @@ import SQLCipher
 
 /// Extension methods for [SQLCipher](https://www.zetetic.net/sqlcipher/).
 /// @see [sqlcipher api](https://www.zetetic.net/sqlcipher/sqlcipher-api/)
-extension Connection {
+extension SQLConnection {
 
     /// - Returns: the SQLCipher version
     public var cipherVersion: String? {
@@ -28,7 +28,7 @@ extension Connection {
         try _key_v2(db: db, keyPointer: key, keySize: key.utf8.count)
     }
 
-    public func key(_ key: Blob, db: String = "main") throws {
+    public func key(_ key: SQLBlob, db: String = "main") throws {
         try _key_v2(db: db, keyPointer: key.bytes, keySize: key.bytes.count)
     }
 
@@ -42,7 +42,7 @@ extension Connection {
         try _rekey_v2(db: db, keyPointer: key, keySize: key.utf8.count)
     }
 
-    public func rekey(_ key: Blob, db: String = "main") throws {
+    public func rekey(_ key: SQLBlob, db: String = "main") throws {
         try _rekey_v2(db: db, keyPointer: key.bytes, keySize: key.bytes.count)
     }
 

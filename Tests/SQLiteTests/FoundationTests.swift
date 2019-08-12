@@ -9,7 +9,7 @@ class FoundationTests : XCTestCase {
     }
 
     func testBlobToData() {
-        let blob = Blob(bytes: [1, 2, 3])
+        let blob = SQLBlob(bytes: [1, 2, 3])
         let data = Data.fromDatatypeValue(blob)
         XCTAssertEqual(Data([1, 2, 3]), data)
     }

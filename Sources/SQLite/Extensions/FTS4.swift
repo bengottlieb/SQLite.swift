@@ -26,22 +26,22 @@
 import SQLiteObjc
 #endif
 
-extension Module {
+extension SQLModule {
 
-    public static func FTS4(_ column: Expressible, _ more: Expressible...) -> Module {
+    public static func FTS4(_ column: Expressible, _ more: Expressible...) -> SQLModule {
         return FTS4([column] + more)
     }
 
-    public static func FTS4(_ columns: [Expressible] = [], tokenize tokenizer: Tokenizer? = nil) -> Module {
+    public static func FTS4(_ columns: [Expressible] = [], tokenize tokenizer: SQLTokenizer? = nil) -> SQLModule {
         return FTS4(FTS4Config().columns(columns).tokenizer(tokenizer))
     }
 
-    public static func FTS4(_ config: FTS4Config) -> Module {
-        return Module(name: "fts4", arguments: config.arguments())
+    public static func FTS4(_ config: FTS4Config) -> SQLModule {
+        return SQLModule(name: "fts4", arguments: config.arguments())
     }
 }
 
-extension VirtualTable {
+extension SQLVirtualTable {
 
     /// Builds an expression appended with a `MATCH` query against the given
     /// pattern.
@@ -55,15 +55,15 @@ extension VirtualTable {
     ///
     /// - Returns: An expression appended with a `MATCH` query against the given
     ///   pattern.
-    public func match(_ pattern: String) -> Expression<Bool> {
+    public func match(_ pattern: String) -> SQLExpression<Bool> {
         return "MATCH".infix(tableName(), pattern)
     }
 
-    public func match(_ pattern: Expression<String>) -> Expression<Bool> {
+    public func match(_ pattern: SQLExpression<String>) -> SQLExpression<Bool> {
         return "MATCH".infix(tableName(), pattern)
     }
 
-    public func match(_ pattern: Expression<String?>) -> Expression<Bool?> {
+    public func match(_ pattern: SQLExpression<String?>) -> SQLExpression<Bool?> {
         return "MATCH".infix(tableName(), pattern)
     }
 
@@ -81,23 +81,23 @@ extension VirtualTable {
         return filter(match(pattern))
     }
 
-    public func match(_ pattern: Expression<String>) -> QueryType {
+    public func match(_ pattern: SQLExpression<String>) -> QueryType {
         return filter(match(pattern))
     }
 
-    public func match(_ pattern: Expression<String?>) -> QueryType {
+    public func match(_ pattern: SQLExpression<String?>) -> QueryType {
         return filter(match(pattern))
     }
 
 }
 
-public struct Tokenizer {
+public struct SQLTokenizer {
 
-    public static let Simple = Tokenizer("simple")
+    public static let Simple = SQLTokenizer("simple")
 
-    public static let Porter = Tokenizer("porter")
+    public static let Porter = SQLTokenizer("porter")
 
-    public static func Unicode61(removeDiacritics: Bool? = nil, tokenchars: Set<Character> = [], separators: Set<Character> = []) -> Tokenizer {
+    public static func Unicode61(removeDiacritics: Bool? = nil, tokenchars: Set<Character> = [], separators: Set<Character> = []) -> SQLTokenizer {
         var arguments = [String]()
 
         if let removeDiacritics = removeDiacritics {
@@ -114,11 +114,11 @@ public struct Tokenizer {
             arguments.append("separators=\(joined)".quote())
         }
 
-        return Tokenizer("unicode61", arguments)
+        return SQLTokenizer("unicode61", arguments)
     }
 
-    public static func Custom(_ name: String) -> Tokenizer {
-        return Tokenizer(Tokenizer.moduleName.quote(), [name.quote()])
+    public static func Custom(_ name: String) -> SQLTokenizer {
+        return SQLTokenizer(SQLTokenizer.moduleName.quote(), [name.quote()])
     }
 
     public let name: String
@@ -134,7 +134,7 @@ public struct Tokenizer {
 
 }
 
-extension Tokenizer : CustomStringConvertible {
+extension SQLTokenizer : CustomStringConvertible {
 
     public var description: String {
         return ([name] + arguments).joined(separator: " ")
@@ -142,10 +142,10 @@ extension Tokenizer : CustomStringConvertible {
 
 }
 
-extension Connection {
+extension SQLConnection {
 
     public func registerTokenizer(_ submoduleName: String, next: @escaping (String) -> (String, Range<String.Index>)?) throws {
-        try check(_SQLiteRegisterTokenizer(handle, Tokenizer.moduleName, submoduleName) { (
+        try check(_SQLiteRegisterTokenizer(handle, SQLTokenizer.moduleName, submoduleName) { (
                 input: UnsafePointer<Int8>, offset: UnsafeMutablePointer<Int32>, length: UnsafeMutablePointer<Int32>) in
             let string = String(cString: input)
 
@@ -175,7 +175,7 @@ open class FTSConfig {
 
     typealias ColumnDefinition = (Expressible, options: [ColumnOption])
     var columnDefinitions = [ColumnDefinition]()
-    var tokenizer: Tokenizer?
+    var tokenizer: SQLTokenizer?
     var prefixes = [Int]()
     var externalContentSchema: SchemaType?
     var isContentless: Bool = false
@@ -194,7 +194,7 @@ open class FTSConfig {
     }
 
     /// [Tokenizers](https://www.sqlite.org/fts3.html#tokenizer)
-    open func tokenizer(_ tokenizer: Tokenizer?) -> Self {
+    open func tokenizer(_ tokenizer: SQLTokenizer?) -> Self {
         self.tokenizer = tokenizer
         return self
     }
@@ -229,7 +229,7 @@ open class FTSConfig {
         var options = Options()
         options.append(formatColumnDefinitions())
         if let tokenizer = tokenizer {
-            options.append("tokenize", value: Expression<Void>(literal: tokenizer.description))
+            options.append("tokenize", value: SQLExpression<Void>(literal: tokenizer.description))
         }
         options.appendCommaSeparated("prefix", values:prefixes.sorted().map { String($0) })
         if isContentless {
@@ -261,12 +261,12 @@ open class FTSConfig {
         }
 
         @discardableResult mutating func append(_ key: String, value: String?) -> Options {
-            return append(key, value: value.map { Expression<String>($0) })
+            return append(key, value: value.map { SQLExpression<String>($0) })
         }
 
         @discardableResult mutating func append(_ key: String, value: Expressible?) -> Options {
             if let value = value {
-                arguments.append("=".join([Expression<Void>(literal: key), value]))
+                arguments.append("=".join([SQLExpression<Void>(literal: key), value]))
             }
             return self
         }

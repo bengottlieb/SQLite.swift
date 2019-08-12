@@ -12,20 +12,20 @@ import SQLite3
 
 class QueryTests : XCTestCase {
 
-    let users = Table("users")
-    let id = Expression<Int64>("id")
-    let email = Expression<String>("email")
-    let age = Expression<Int?>("age")
-    let admin = Expression<Bool>("admin")
-    let optionalAdmin = Expression<Bool?>("admin")
+    let users = SQLTable("users")
+    let id = SQLExpression<Int64>("id")
+    let email = SQLExpression<String>("email")
+    let age = SQLExpression<Int?>("age")
+    let admin = SQLExpression<Bool>("admin")
+    let optionalAdmin = SQLExpression<Bool?>("admin")
 
-    let posts = Table("posts")
-    let userId = Expression<Int64>("user_id")
-    let categoryId = Expression<Int64>("category_id")
-    let published = Expression<Bool>("published")
+    let posts = SQLTable("posts")
+    let userId = SQLExpression<Int64>("user_id")
+    let categoryId = SQLExpression<Int64>("category_id")
+    let published = SQLExpression<Bool>("published")
 
-    let categories = Table("categories")
-    let tag = Expression<String>("tag")
+    let categories = SQLTable("categories")
+    let tag = SQLExpression<String>("tag")
 
     func test_select_withExpression_compilesSelectClause() {
         AssertSQL("SELECT \"email\" FROM \"users\"", users.select(email))
@@ -209,7 +209,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_alias_aliasesTable() {
-        let managerId = Expression<Int64>("manager_id")
+        let managerId = SQLExpression<Int64>("manager_id")
 
         let managers = users.alias("managers")
 
@@ -239,7 +239,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_insert_withQuery_compilesInsertExpressionWithSelectStatement() {
-        let emails = Table("emails")
+        let emails = SQLTable("emails")
 
         AssertSQL(
             "INSERT INTO \"emails\" SELECT \"email\" FROM \"users\" WHERE \"admin\"",
@@ -248,7 +248,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_insert_encodable() throws {
-        let emails = Table("emails")
+        let emails = SQLTable("emails")
         let value = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: nil)
         let insert = try emails.insert(value)
         AssertSQL(
@@ -258,7 +258,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_insert_encodable_with_nested_encodable() throws {
-        let emails = Table("emails")
+        let emails = SQLTable("emails")
         let value1 = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: nil)
         let value = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: "optional", sub: value1)
         let insert = try emails.insert(value)
@@ -285,7 +285,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_update_encodable() throws {
-        let emails = Table("emails")
+        let emails = SQLTable("emails")
         let value = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: nil)
         let update = try emails.update(value)
         AssertSQL(
@@ -295,7 +295,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_update_encodable_with_nested_encodable() throws {
-        let emails = Table("emails")
+        let emails = SQLTable("emails")
         let value1 = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: nil)
         let value = TestCodable(int: 1, string: "2", bool: true, float: 3, double: 4, optional: nil, sub: value1)
         let update = try emails.update(value)
@@ -340,7 +340,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_subscript_withExpression_returnsNamespacedExpression() {
-        let query = Table("query")
+        let query = SQLTable("query")
 
         AssertSQL("\"query\".\"blob\"", query[data])
         AssertSQL("\"query\".\"blobOptional\"", query[dataOptional])
@@ -367,7 +367,7 @@ class QueryTests : XCTestCase {
     }
 
     func test_tableNamespacedByDatabase() {
-        let table = Table("table", database: "attached")
+        let table = SQLTable("table", database: "attached")
 
         AssertSQL("SELECT * FROM \"attached\".\"table\"", table)
     }
@@ -376,8 +376,8 @@ class QueryTests : XCTestCase {
 
 class QueryIntegrationTests : SQLiteTestCase {
 
-    let id = Expression<Int64>("id")
-    let email = Expression<String>("email")
+    let id = SQLExpression<Int64>("id")
+    let email = SQLExpression<String>("email")
 
     override func setUp() {
         super.setUp()
@@ -388,7 +388,7 @@ class QueryIntegrationTests : SQLiteTestCase {
     // MARK: -
 
     func test_select() {
-        let managerId = Expression<Int64>("manager_id")
+        let managerId = SQLExpression<Int64>("manager_id")
         let managers = users.alias("managers")
 
         let alice = try! db.run(users.insert(email <- "alice@example.com"))
@@ -403,7 +403,7 @@ class QueryIntegrationTests : SQLiteTestCase {
         let names = ["a", "b", "c"]
         try! InsertUsers(names)
 
-        let emailColumn = Expression<String>("email")
+        let emailColumn = SQLExpression<String>("email")
         let emails = try! db.prepareRowIterator(users).map { $0[emailColumn] }
 
         XCTAssertEqual(names.map({ "\($0)@example.com" }), emails.sorted())
@@ -419,7 +419,7 @@ class QueryIntegrationTests : SQLiteTestCase {
     }
 
     func test_select_optional() {
-        let managerId = Expression<Int64?>("manager_id")
+        let managerId = SQLExpression<Int64?>("manager_id")
         let managers = users.alias("managers")
 
         let alice = try! db.run(users.insert(email <- "alice@example.com"))
@@ -431,7 +431,7 @@ class QueryIntegrationTests : SQLiteTestCase {
     }
 
     func test_select_codable() throws {
-        let table = Table("codable")
+        let table = SQLTable("codable")
         try db.run(table.create { builder in
             builder.column(Expression<Int>("int"))
             builder.column(Expression<String>("string"))
@@ -505,17 +505,17 @@ class QueryIntegrationTests : SQLiteTestCase {
         let actualIDs = try db.prepare(query1.union(query2)).map { $0[id] }
         XCTAssertEqual(expectedIDs, actualIDs)
         
-        let query3 = users.select(users[*], Expression<Int>(literal: "1 AS weight")).filter(email == "sally@example.com")
-        let query4 = users.select(users[*], Expression<Int>(literal: "2 AS weight")).filter(email == "alice@example.com")
+        let query3 = users.select(users[*], SQLExpression<Int>(literal: "1 AS weight")).filter(email == "sally@example.com")
+        let query4 = users.select(users[*], SQLExpression<Int>(literal: "2 AS weight")).filter(email == "alice@example.com")
         
-        print(query3.union(query4).order(Expression<Int>(literal: "weight")).asSQL())
+        print(query3.union(query4).order(SQLExpression<Int>(literal: "weight")).asSQL())
         
-        let orderedIDs = try db.prepare(query3.union(query4).order(Expression<Int>(literal: "weight"), email)).map { $0[id] }
+        let orderedIDs = try db.prepare(query3.union(query4).order(SQLExpression<Int>(literal: "weight"), email)).map { $0[id] }
         XCTAssertEqual(Array(expectedIDs.reversed()), orderedIDs)
     }
 
     func test_no_such_column() throws {
-        let doesNotExist = Expression<String>("doesNotExist")
+        let doesNotExist = SQLExpression<String>("doesNotExist")
         try! InsertUser("alice")
         let row = try! db.pluck(users.filter(email == "alice@example.com"))!
 

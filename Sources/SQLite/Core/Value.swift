@@ -87,15 +87,15 @@ extension String : Binding, Value {
 
 }
 
-extension Blob : Binding, Value {
+extension SQLBlob : Binding, Value {
 
     public static let declaredDatatype = "BLOB"
 
-    public static func fromDatatypeValue(_ datatypeValue: Blob) -> Blob {
+    public static func fromDatatypeValue(_ datatypeValue: SQLBlob) -> SQLBlob {
         return datatypeValue
     }
 
-    public var datatypeValue: Blob {
+    public var datatypeValue: SQLBlob {
         return self
     }
 
